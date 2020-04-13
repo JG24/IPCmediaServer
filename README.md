@@ -7,10 +7,10 @@ Connection to the server is possible at http://IP:8080/cgi-bin/webui - where IP 
 
 That's how it looks:
 
-Live view:
+**Live view**:
 ![IPCmediaServer live view](https://raw.githubusercontent.com/JG24/IPCmediaServer/master/docs/IPCmediaServer-live.png)
 
-Playback:
+**Playback**:
 ![IPCmediaServer playback](https://raw.githubusercontent.com/JG24/IPCmediaServer/master/docs/IPCmediaServer-playback.png)
 
 The site is responsive and can be successfully viewed on smartphones.
