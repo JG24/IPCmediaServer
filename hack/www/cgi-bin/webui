@@ -1,0 +1,303 @@
+#!/bin/sh
+#
+# echo "Content-type: video/mp4"
+
+ip=`ifconfig wlan0|grep 'inet addr'|awk '{print $2}'|sed 's/addr://'`
+sdMemory=`df -h|grep "mmcblk0p1"|head -n 1|awk '{print "used: "$3"; available: "$4}'`
+url="http://$ip"
+snapshot="$url:554/snapshot"
+camDate=`date '+%F'`
+camTime=`date '+%T'`
+
+echo "Content-type: text/html"
+echo ""
+videosFolder=`ls -r /media/hack/www/videos/|grep -E "^[0-9]{4}\-[0-9]{2}\-[0-9]{2}"`
+
+if [ "$REQUEST_METHOD" = "GET" ]; then
+
+	videoFolder=$(echo "$QUERY_STRING" | sed -n 's/^.*folder=\([^&]*\).*$/\1/p')
+	videoFile=$(echo "$QUERY_STRING" | sed -n 's/^.*video=\([^&]*\).*$/\1/p')
+	cameraCmd=$(echo "$QUERY_STRING" | sed -n 's/^.*cmd=\([^&]*\).*$/\1/p')
+
+fi
+
+if [ "$REQUEST_METHOD" = "POST" ]; then
+
+	if [ -f /home/HACKP ]; then
+		ptzPath="/home/hack"
+	elif [ -f /home/HACKSD ]; then
+		ptzPath="/media/hack"
+	fi
+
+	cameraCmd=$(echo "$QUERY_STRING" | sed -n 's/^.*cmd=\([^&]*\).*$/\1/p')
+
+	case $cameraCmd in
+		"ir-on") gio -s 46 1 > /dev/null ;;
+		"if-off") gio -s 46 0 > /dev/null ;;
+		"ptz-d") $ptzPath/ptz-ctrl u > /dev/null ;;
+		"ptz-u") $ptzPath/ptz-ctrl d > /dev/null ;;
+		"ptz-l") $ptzPath/ptz-ctrl l > /dev/null ;;
+		"ptz-r") $ptzPath/ptz-ctrl r > /dev/null ;;
+		*) echo "do nothing"
+	esac
+
+	exit 1;
+
+fi
+
+selectFolder="<option selected=\"selected\" value=\"\">Choose folder date</option>"
+for d in $videosFolder
+do
+	selectFolder="$selectFolder<option value="$d">$d</option>"
+done
+
+if [ -n "$videoFolder" ]; then
+	videosFiles=`ls -r /media/hack/www/videos/$videoFolder|grep -E "^[0-9]{8}\-[0-9]{6}.*\.mp4$"`
+
+	selectVideo="<option selected=\"selected\" value=\"\">Choose video</option>"
+	for f in $videosFiles
+	do
+		selectVideo="$selectVideo<option value=\"$f\">$f</option>"
+	done
+
+fi
+
+cat <<EOT
+<!DOCTYPE html>
+<html lang="pl">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>IP Camera Video Server</title>
+		<meta name="robots" content="noindex,nofollow" />
+		<meta name="copyright" content="2020" />
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" rel="stylesheet">
+		<link href="https://cdn.jsdelivr.net/npm/video.js@7.8.0/dist/video-js.min.css" rel="stylesheet">
+		<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+		<script type="text/javascript">
+		function update() {
+			if (document.getElementById("liveView"))
+			{
+				var source = '$snapshot', timestamp = (new Date()).getTime(), newUrl = source + '?' + timestamp;
+				document.getElementById("liveView").src = newUrl;
+				setTimeout(update, 2000);
+			}
+		}
+		</script>
+		<style type="text/css">
+		* {
+			font-family: Arial, Helvetica, sans-serif;
+			font-size: 14px;
+		}
+		
+		html, body {
+			margin: 0;
+			padding: 0;
+		}
+		
+		#header ul {
+			margin: 0;
+			padding: 10px;
+			background-image: linear-gradient(to right bottom, #d8f3ff, #caefff, #bdebff, #aee6ff, #9fe2ff);
+			text-align: right;
+		}
+		
+			#header ul li {
+				display: inline-block;
+				text-shadow: 1px 1px 1px #fff;
+				margin-right: 15px;
+			}
+			
+			#header ul li:nth-of-type(1) {
+				float: left;
+			}
+			
+		#logo {
+			color: #000;
+			text-decoration: none;
+			font-size: 16px;
+			font-weight: bold;
+		}
+			
+		#layout {
+			padding: 10px;
+		}
+		
+		#layout p {
+			padding: 0px;
+			margin: 0 0 5px 0;
+		}
+		
+		#selects {
+			margin-bottom: 15px;
+		}
+		
+		#live {
+			margin-bottom: 25px;
+		}
+		
+		#liveView {
+			max-width: 100%;
+			height: auto;
+		}
+		
+		#videoArea {
+			max-width: 1000px;
+			max-height: 563px;
+		}
+		
+		#remote ul {
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+		
+			#remote ul li {
+				display: inline-block;
+				float: left;
+				margin: 0;
+				padding: 0;
+				width: 40px;
+				height: 40px;
+				text-align: center;
+			}
+			
+			#remote ul:nth-of-type(1) li:nth-of-type(3) {
+				margin-right: 100px;
+			}
+				
+				#remote ul li button {
+					margin: 0;
+					padding: 0;
+					background-color: transparent;
+					background-repeat: no-repeat;
+					border: none;
+					cursor: pointer;
+					outline: none;
+					font-size: 35px;
+				}
+				
+					#remote ul li button:hover {
+						color: #9fe2ff;
+					}
+				
+		@media (max-width:768px) {
+			#header ul > li:nth-of-type(1) {
+				display: block;
+				overflow: hidden;
+				width: 100%;
+				text-align: left;
+				margin-bottom: 10px;
+			}
+			
+			#header ul > li:nth-of-type(5) {
+				display: none;
+			}
+			
+			#header ul > li:not(:first-child) {
+				font-size: 13px;
+				margin: 0 0 0 5px;
+			}
+		}
+		</style>
+	</head>
+	<body>
+	
+		<div id="header">
+			<ul>
+				<li><a href="$url:8080/cgi-bin/webui" id="logo"><i class="fas fa-video"></i> IPCmediaServer</a></li>
+				<li><i class="fas fa-network-wired"></i> $ip</li>
+				<li><i class="fas fa-sd-card"></i> $sdMemory</li>
+				<li><i class="far fa-clock"></i> $camTime</li>
+				<li><i class="far fa-calendar-alt"></i> $camDate</li>
+			</ul>
+		</div>
+		<div id="layout">
+EOT
+			if [ -z "$videoFolder" ]; then
+			
+cat <<EOT
+			
+			<div id="live">
+				<div>
+					<img src="$snapshot" alt="" id="liveView" />
+				</div>
+				<div id="remote">
+					<ul>
+						<li></li>
+						<li><button type="button" data-cmd="ptz-u"><i class="fas fa-arrow-alt-circle-up"></i></button></li>
+						<li></li>
+						<li><button type="button" data-cmd="ir-on"><i class="fas fa-lightbulb"></i></button></li>
+						<li><button type="button" data-cmd="ir-off"><i class="far fa-lightbulb"></i></button></li>
+					</ul>
+					<ul>
+						<li><button type="button" data-cmd="ptz-l"><i class="fas fa-arrow-alt-circle-left"></i></button></li>
+						<li></li>
+						<li><button type="button" data-cmd="ptz-r"><i class="fas fa-arrow-alt-circle-right"></i></button></li>
+					</ul>
+					<ul>
+						<li></li>
+						<li><button type="button" data-cmd="ptz-d"><i class="fas fa-arrow-alt-circle-down"></i></button></li>
+						<li></li>
+					</ul>
+				</div>
+			</div>
+			
+EOT
+		fi
+cat <<EOT
+			<div id="archive">
+				<p><i class="fas fa-film"></i> Select a video file:</p>
+				<div id="selects">
+					<select id="selectFolder" onchange="if (this.value) window.location.href='webui?folder=' + this.value">$selectFolder</select>
+EOT
+			if [ -n "$videoFolder" ]; then
+				echo "<select id=\"selectVideo\" onchange=\"if (this.value) window.location.href='webui?folder=$videoFolder&amp;video=' + this.value\">$selectVideo</select>"
+			fi
+
+			echo "</div>"
+			
+			if [ -n "$videoFile" ]; then
+				echo "<div id="videoArea"><video id=\"video-js\" class=\"video-js vjs-default-skin vjs-16-9\" controls data-setup={} preload=\"auto\">"
+					echo "<source src=\"$url:8080/videos/$videoFolder/$videoFile\" type=\"video/mp4\">"
+				echo "</video></div>"
+			fi
+			
+cat <<EOT
+			</div>
+			<script src="https://cdn.jsdelivr.net/npm/video.js@7.8.0/dist/video.min.js"></script>
+			
+			<script>
+				update();
+				
+				if (document.getElementById('selectFolder'))
+				{
+					document.getElementById('selectFolder').value = '$videoFolder';
+				}
+				
+				if (document.getElementById('selectVideo'))
+				{
+					document.getElementById('selectVideo').value = '$videoFile';
+				}
+				
+				\$(document).ready(function(){
+					\$("#remote button").click(function(){
+						if (\$(this).data("cmd"))
+						{
+							\$.post("$url:8080/cgi-bin/webui?cmd=" + \$(this).data("cmd"), function(data) {
+								console.log(data);
+							});
+						}
+					});
+				});
+			</script>
+
+		</div>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js"></script>
+		
+		
+	</body>
+</html>
+EOT
+
