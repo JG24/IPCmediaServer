@@ -1,6 +1,5 @@
 #!/bin/sh
 #
-# echo "Content-type: video/mp4"
 
 ip=`ifconfig wlan0|grep 'inet addr'|awk '{print $2}'|sed 's/addr://'`
 sdMemory=`df -h|grep "mmcblk0p1"|head -n 1|awk '{print "used: "$3"; available: "$4}'`
@@ -284,9 +283,7 @@ cat <<EOT
 					\$("#remote button").click(function(){
 						if (\$(this).data("cmd"))
 						{
-							\$.post("$url:8080/cgi-bin/webui?cmd=" + \$(this).data("cmd"), function(data) {
-								console.log(data);
-							});
+							\$.post("$url:8080/cgi-bin/webui?cmd=" + \$(this).data("cmd"));
 						}
 					});
 				});
@@ -300,4 +297,3 @@ cat <<EOT
 	</body>
 </html>
 EOT
-
