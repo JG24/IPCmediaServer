@@ -5,6 +5,8 @@ A few days ago I bought SMARTROL ZX-C23 camera on one of the Chinese portals and
 
 Connection to the server is possible at http://IP:8080/cgi-bin/webui - where IP is the camera address assigned by the router.
 
+All video traffic **is not transmitted** through external servers! However, I use several CDNs (Content Delivery Network) from where I get resources like jQuery or FontAwesome.
+
 That's how it looks:
 
 **Live view**:
