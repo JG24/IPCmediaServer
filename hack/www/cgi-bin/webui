@@ -272,8 +272,8 @@ cat <<EOT
 EOT
 			if [ -n "$videoFolder" ]; then
 				echo "<select id=\"selectVideo\" onchange=\"if (this.value) window.location.href='webui?folder=$videoFolder&amp;video=' + this.value\">$selectVideo</select>"
+				echo "<button type="button" id="filePrev" data-type="prev"></button><button type="button" id="fileNext" data-type="next"></button>";
 			fi
-			echo "<button type="button" id="filePrev" data-type="prev"></button><button type="button" id="fileNext" data-type="next"></button>";
 			echo "</div>"
 			
 			if [ -n "$videoFile" ]; then
