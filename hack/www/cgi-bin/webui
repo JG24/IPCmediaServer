@@ -56,7 +56,8 @@ if [ -n "$videoFolder" ]; then
 	selectVideo="<option selected=\"selected\" value=\"\">Choose video</option>"
 	for f in $videosFiles
 	do
-		selectVideo="$selectVideo<option value=\"$f\">$f</option>"
+		hour=${f:9:6}
+		selectVideo="$selectVideo<option value=\"$f\">${hour:0:2}:${hour:2:2}:${hour:4:2}</option>"
 	done
 
 fi
@@ -179,6 +180,25 @@ cat <<EOT
 					#remote ul li button:hover {
 						color: #9fe2ff;
 					}
+		
+		#filePrev, #fileNext {
+			border: 0;
+			background: none;
+			cursor: pointer;
+			padding: 0 10px;
+		}
+		
+		#filePrev:before {
+			content: "\f0a8";
+			font-family: "FontAwesome";
+			font-weight: normal;
+		}
+		
+		#fileNext:before {
+			content: "\f0a9";
+			font-family: "FontAwesome";
+			font-weight: normal;
+		}
 				
 		@media (max-width:768px) {
 			#header ul > li:nth-of-type(1) {
@@ -253,7 +273,7 @@ EOT
 			if [ -n "$videoFolder" ]; then
 				echo "<select id=\"selectVideo\" onchange=\"if (this.value) window.location.href='webui?folder=$videoFolder&amp;video=' + this.value\">$selectVideo</select>"
 			fi
-
+			echo "<button type="button" id="filePrev" data-type="prev"></button><button type="button" id="fileNext" data-type="next"></button>";
 			echo "</div>"
 			
 			if [ -n "$videoFile" ]; then
@@ -285,6 +305,11 @@ cat <<EOT
 						{
 							\$.post("$url:8080/cgi-bin/webui?cmd=" + \$(this).data("cmd"));
 						}
+					});
+					
+					\$("#fileNext, #filePrev").click(function() {
+						\$("#selectVideo :selected")[\$(this).data("type")]().prop("selected", true);
+						\$("#selectVideo").trigger("change");
 					});
 				});
 			</script>
